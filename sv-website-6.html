@@ -247,20 +247,55 @@ body:not(.ez-edit-on) .item-actions{display:none !important;}
   overflow-y:auto;
 }
 #customizePanel *{box-sizing:border-box;}
-#customizePanel .cp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:8px;}
-#customizePanel .cp-head strong{font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#f2f2f0;}
-#customizePanel .cp-head-btns{display:flex;gap:6px;}
-#customizePanel .cp-history-btn{font-size:11px;color:#f2f2f0;font-weight:600;padding:4px 9px;border:1px solid rgba(255,255,255,0.22);border-radius:100px;display:inline-flex;align-items:center;gap:4px;transition:opacity .2s ease, border-color .2s ease;}
-#customizePanel .cp-history-btn:hover{border-color:rgba(201,161,90,0.6);color:#C9A15A;}
-#customizePanel .cp-history-btn:disabled{opacity:0.35;cursor:not-allowed;}
-#customizePanel .cp-history-btn:disabled:hover{border-color:rgba(255,255,255,0.22);color:#f2f2f0;}
-#customizePanel .cp-toggle{font-size:12px;color:#C9A15A;font-weight:600;padding:4px 8px;border:1px solid rgba(201,161,90,0.4);border-radius:100px;}
-#customizePanel .cp-group{margin-bottom:14px;}
-#customizePanel .cp-group label{display:block;font-size:11.5px;color:#9A9A96;margin-bottom:6px;}
-#customizePanel select{
-  width:100%;padding:9px 10px;background:#0A0A0A;color:#f2f2f0;
-  border:1px solid rgba(255,255,255,0.16);border-radius:8px;font-size:13px;
+#customizePanel .cp-head{display:block;margin-bottom:0;}
+#customizePanel .cp-head strong{
+  display:block;font-size:11px;line-height:1;letter-spacing:.08em;
+  text-transform:uppercase;color:#f2f2f0;margin:1px 0 9px;
 }
+#customizePanel .cp-head-btns{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;width:100%;
+}
+#customizePanel .cp-history-btn,
+#customizePanel .cp-toggle,
+#customizePanel .cp-show{
+  min-width:0;width:100%;height:44px;padding:4px 2px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);background:transparent;color:#f2f2f0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-size:8.5px;line-height:1;font-weight:600;
+  transition:background .18s ease,border-color .18s ease,color .18s ease,opacity .18s ease;
+}
+#customizePanel .cp-history-btn:hover,
+#customizePanel .cp-toggle:hover,
+#customizePanel .cp-show:hover{
+  background:rgba(255,255,255,.04);border-color:rgba(201,161,90,.55);
+}
+#customizePanel .cp-history-btn:disabled{opacity:.35;cursor:not-allowed;}
+#customizePanel .cp-history-btn .cp-control-icon,
+#customizePanel .cp-toggle .cp-control-icon,
+#customizePanel .cp-show .cp-control-icon{font-size:14px;line-height:1;}
+#customizePanel .cp-show{color:#C9A15A;border-color:rgba(201,161,90,.45);}
+#customizePanel .cp-show:hover{background:rgba(201,161,90,.08);border-color:#C9A15A;}
+#customizePanel.cp-collapsed{
+  width:56px;min-width:56px;height:56px;padding:0;border-radius:14px;overflow:hidden;
+}
+#customizePanel.cp-collapsed .cp-head{width:100%;height:100%;}
+#customizePanel.cp-collapsed .cp-head strong,
+#customizePanel.cp-collapsed .cp-head-btns > *:not(#cpToggle),
+#customizePanel.cp-collapsed #cpBody{display:none!important;}
+#customizePanel.cp-collapsed .cp-head-btns{display:flex;width:100%;height:100%;}
+#customizePanel.cp-collapsed #cpToggle{
+  width:56px;height:56px;border:0;border-radius:14px;padding:0;color:#fff;background:transparent;
+}
+#customizePanel.cp-collapsed #cpToggle .cp-control-icon{font-size:16px;}
+#customizePanel.cp-collapsed #cpToggle .cp-control-label{display:block;font-size:8.5px;}
+@media (max-width:720px){
+  #customizePanel{left:auto;right:16px;bottom:16px;width:260px;padding:10px 11px 11px;}
+  #customizePanel .cp-history-btn,
+  #customizePanel .cp-toggle,
+  #customizePanel .cp-show{height:42px;}
+  #customizePanel.cp-collapsed{left:auto;right:16px;width:56px;min-width:56px;}
+}
+
 #customizePanel .cp-divider{height:1px;background:rgba(255,255,255,0.1);margin:14px 0;}
 #customizePanel .cp-note{font-size:10.5px;color:#6B6B67;line-height:1.5;margin-top:6px;}
 #customizePanel .cp-note code{background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:4px;}
@@ -3010,9 +3045,9 @@ body.ez-edit-on .ez-add-btn{display:flex;}
         <span class="cp-control-icon" aria-hidden="true">↷</span>
         <span class="cp-control-label">Redo</span>
       </button>
-      <button class="cp-show" id="cpShow" type="button" title="Show Customize Controls">
-        <span class="cp-control-icon" aria-hidden="true">•</span>
-        <span class="cp-control-label">Show</span>
+      <button class="cp-show" id="cpShow" type="button" title="Hide Customize Controls">
+        <span class="cp-control-icon" aria-hidden="true">−</span>
+        <span class="cp-control-label">Hide</span>
       </button>
     </div>
   </div>
@@ -3331,9 +3366,23 @@ body.ez-edit-on .ez-add-btn{display:flex;}
   var cpBody = $("#cpBody");
   var cpShow = $("#cpShow");
 
+  function setCustomizeBodyVisible(visible){
+    if(cpBody) cpBody.style.display = visible ? "block" : "none";
+    if(cpShow){
+      var label = cpShow.querySelector(".cp-control-label");
+      var icon = cpShow.querySelector(".cp-control-icon");
+      if(label) label.textContent = visible ? "Hide" : "Show";
+      if(icon) icon.textContent = visible ? "−" : "+";
+      cpShow.title = visible ? "Hide Customize Controls" : "Show Customize Controls";
+    }
+  }
+
   function setCustomizePanelCollapsed(collapsed){
     customizePanel.classList.toggle("cp-collapsed", !!collapsed);
-    if(cpBody) cpBody.style.display = "block";
+    setCustomizeBodyVisible(true);
+    var toggleLabel = cpToggle && cpToggle.querySelector(".cp-control-label");
+    if(toggleLabel) toggleLabel.textContent = collapsed ? "Show" : "Collapsed";
+    cpToggle.title = collapsed ? "Show Customize Panel" : "Collapse Customize Panel";
     cpToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
   }
 
@@ -3343,8 +3392,11 @@ body.ez-edit-on .ez-add-btn{display:flex;}
 
   if(cpShow){
     cpShow.addEventListener("click", function(){
-      if(customizePanel.classList.contains("cp-collapsed")) setCustomizePanelCollapsed(false);
-      if(cpBody) cpBody.style.display = "block";
+      if(customizePanel.classList.contains("cp-collapsed")){
+        setCustomizePanelCollapsed(false);
+      } else {
+        setCustomizeBodyVisible(cpBody.style.display === "none");
+      }
     });
   }
 
@@ -6419,6 +6471,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     if(viewOnly) body.classList.add("ez-view-only");
     setEditMode(false);
     setCustomizePanelCollapsed(false);
+    setCustomizeBodyVisible(true);
     applySiteName($("#cpSiteName") ? $("#cpSiteName").value : "SOLACE", $("#cpSiteDescriptor") ? $("#cpSiteDescriptor").value : "Digital Products & E-books");
     ensurePageElementIds();
     ensureSolaceEditorTargets();
