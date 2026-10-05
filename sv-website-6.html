@@ -294,6 +294,63 @@ body:not(.ez-edit-on) .item-actions{display:none !important;}
   #customizePanel{left:16px;right:16px;bottom:16px;width:auto;}
 }
 
+/* ---------- Compact Customize Panel redesign ---------- */
+#customizePanel{
+  width:408px;
+  padding:15px 16px 16px;
+  border-radius:18px;
+  background:#141414;
+}
+#customizePanel .cp-head{display:block;margin-bottom:0;}
+#customizePanel .cp-head strong{
+  display:block;font-size:12px;line-height:1;letter-spacing:.08em;
+  text-transform:uppercase;color:#f2f2f0;margin:1px 0 12px;
+}
+#customizePanel .cp-head-btns{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%;
+}
+#customizePanel .cp-history-btn,
+#customizePanel .cp-toggle,
+#customizePanel .cp-show{
+  min-width:0;width:100%;height:74px;padding:7px 5px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);background:transparent;color:#f2f2f0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  font-size:11px;line-height:1.05;font-weight:600;
+  transition:background .18s ease,border-color .18s ease,color .18s ease,opacity .18s ease;
+}
+#customizePanel .cp-history-btn:hover,
+#customizePanel .cp-toggle:hover,
+#customizePanel .cp-show:hover{
+  background:rgba(255,255,255,.04);border-color:rgba(201,161,90,.55);
+}
+#customizePanel .cp-history-btn:disabled{opacity:.35;cursor:not-allowed;}
+#customizePanel .cp-history-btn .cp-control-icon,
+#customizePanel .cp-toggle .cp-control-icon,
+#customizePanel .cp-show .cp-control-icon{font-size:18px;line-height:1;}
+#customizePanel .cp-show{color:#C9A15A;border-color:rgba(201,161,90,.45);}
+#customizePanel .cp-show:hover{background:rgba(201,161,90,.08);border-color:#C9A15A;}
+#customizePanel.cp-collapsed{
+  width:64px;min-width:64px;height:64px;padding:0;border-radius:16px;overflow:hidden;
+}
+#customizePanel.cp-collapsed .cp-head{width:100%;height:100%;}
+#customizePanel.cp-collapsed .cp-head strong,
+#customizePanel.cp-collapsed .cp-head-btns > *:not(#cpToggle),
+#customizePanel.cp-collapsed #cpBody{display:none!important;}
+#customizePanel.cp-collapsed .cp-head-btns{display:flex;width:100%;height:100%;}
+#customizePanel.cp-collapsed #cpToggle{
+  width:64px;height:64px;border:0;border-radius:16px;padding:0;color:#fff;background:transparent;
+}
+#customizePanel.cp-collapsed #cpToggle .cp-control-label{display:none;}
+#customizePanel.cp-collapsed #cpToggle .cp-control-icon{font-size:19px;}
+@media (max-width:720px){
+  #customizePanel{left:16px;right:16px;bottom:16px;width:auto;}
+  #customizePanel .cp-head-btns{grid-template-columns:repeat(4,minmax(0,1fr));}
+  #customizePanel .cp-history-btn,
+  #customizePanel .cp-toggle,
+  #customizePanel .cp-show{height:68px;font-size:10px;}
+  #customizePanel.cp-collapsed{left:auto;right:16px;width:64px;min-width:64px;}
+}
+
 #ezAttrInspector{
   position:fixed;bottom:70px;left:18px;z-index:2147483100;background:#16181d;color:#f2f1ec;
   border:1px solid rgba(255,255,255,0.14);border-radius:10px;padding:12px;width:260px;
@@ -1677,7 +1734,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
 
             filtered.forEach(p => {
                 const card = document.createElement('div');
-                card.className = 'glass-card rounded-2xl border border-copper/15 overflow-hidden flex flex-col justify-between group hover:border-copper/40 transition-all duration-300';
+                card.className = 'glass-card rounded-2xl border border-copper/15 overflow-hidden flex flex-col justify-between group hover:border-copper/40 transition-all duration-300 ez-product-managed-card';
                 card.dataset.category = p.category;
                 card.dataset.productId = p.id;
 
@@ -1752,6 +1809,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
                 }
                 btn.dataset.filter = cat.id;
                 btn.dataset.productCategoryId = cat.id;
+                btn.classList.add('ez-product-managed-category-tab');
                 btn.textContent = cat.name;
                 const active = (activeId || state.activeProductCategory || 'all') === cat.id;
                 btn.classList.toggle('bg-copper', active);
@@ -1889,7 +1947,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
         function createProductGuideTab(key){
             var btn=document.createElement('button');
             btn.type='button';
-            btn.className='roast-tab p-4 rounded-xl glass-card border border-copper/15 text-center transition-all hover:border-copper';
+            btn.className='roast-tab p-4 rounded-xl glass-card border border-copper/15 text-center transition-all hover:border-copper ez-product-managed-guide-tab';
             btn.dataset.roast=key;
             btn.dataset.productGuideGenerated='true';
 
@@ -2932,11 +2990,24 @@ body.ez-edit-on .ez-add-btn{display:flex;}
 
 <div id="customizePanel">
   <div class="cp-head">
-    <strong>Customize</strong>
+    <strong>CUSTOMIZE</strong>
     <div class="cp-head-btns">
-      <button class="cp-history-btn" id="cpUndo" type="button" title="Undo">↺ Undo</button>
-      <button class="cp-history-btn" id="cpRedo" type="button" title="Redo">↻ Redo</button>
-      <button class="cp-toggle" id="cpToggle" type="button">Hide</button>
+      <button class="cp-toggle" id="cpToggle" type="button" title="Collapse Customize Panel" aria-expanded="true">
+        <span class="cp-control-icon" aria-hidden="true">↙↗</span>
+        <span class="cp-control-label">Collapsed</span>
+      </button>
+      <button class="cp-history-btn" id="cpUndo" type="button" title="Undo">
+        <span class="cp-control-icon" aria-hidden="true">↶</span>
+        <span class="cp-control-label">Undo</span>
+      </button>
+      <button class="cp-history-btn" id="cpRedo" type="button" title="Redo">
+        <span class="cp-control-icon" aria-hidden="true">↷</span>
+        <span class="cp-control-label">Redo</span>
+      </button>
+      <button class="cp-show" id="cpShow" type="button" title="Show Customize Controls">
+        <span class="cp-control-icon" aria-hidden="true">•</span>
+        <span class="cp-control-label">Show</span>
+      </button>
     </div>
   </div>
   <div id="cpBody">
@@ -3130,6 +3201,15 @@ body.ez-edit-on .ez-add-btn{display:flex;}
   // ============================================================
   // SOLACE TARGET COMPATIBILITY
   // ============================================================
+  function isEditorManagedReadOnlyElement(el){
+    if(!el || !el.closest) return false;
+    return !!el.closest(
+      "#product-grid .ez-product-managed-card," +
+      "#container0035 .ez-product-managed-category-tab," +
+      "#container0038 .ez-product-managed-guide-tab"
+    );
+  }
+
   function ensureSolaceEditorTargets(){
     var roots=[];
     var mainEl=document.getElementById("main");
@@ -3143,10 +3223,31 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     roots.forEach(function(root){
       $all(textSel, root).forEach(function(el){
         if(!el.id || el.closest("#customizePanel,#ezStylePanel,#ezFrameToolbar,#ezAttrInspector,#ezLinkPopup,#ezIdListPanel,#ezCustomCodeModal,#ezUnsavedPill,.item-actions,.ez-add-btn")) return;
+        if(isEditorManagedReadOnlyElement(el)){
+          el.classList.remove("editable-text","ez-solace-editable");
+          el.setAttribute("contenteditable","false");
+          return;
+        }
         if(!el.matches("input,textarea,select")) el.classList.add("editable-text");
       });
-      $all("img[id]", root).forEach(function(img){ img.classList.add("ez-solace-editable"); if(img.id==="imageLogoNavbar"||img.id==="imageLogoFooter") img.classList.add("ez-solace-logo"); });
-      $all("section[id],nav[id],footer[id],.glass-card[id]", root).forEach(function(el){ if(!el.closest("#customizePanel,#ezStylePanel,#ezFrameToolbar,#ezAttrInspector,#ezLinkPopup,#ezIdListPanel,#ezCustomCodeModal,#ezUnsavedPill")) el.classList.add("ez-solace-editable"); });
+      $all("img[id]", root).forEach(function(img){
+        if(isEditorManagedReadOnlyElement(img)){
+          img.classList.remove("editable-text","ez-solace-editable");
+          img.setAttribute("contenteditable","false");
+          return;
+        }
+        img.classList.add("ez-solace-editable");
+        if(img.id==="imageLogoNavbar"||img.id==="imageLogoFooter") img.classList.add("ez-solace-logo");
+      });
+      $all("section[id],nav[id],footer[id],.glass-card[id]", root).forEach(function(el){
+        if(el.closest("#customizePanel,#ezStylePanel,#ezFrameToolbar,#ezAttrInspector,#ezLinkPopup,#ezIdListPanel,#ezCustomCodeModal,#ezUnsavedPill")) return;
+        if(isEditorManagedReadOnlyElement(el)){
+          el.classList.remove("editable-text","ez-solace-editable");
+          el.setAttribute("contenteditable","false");
+          return;
+        }
+        el.classList.add("ez-solace-editable");
+      });
     });
   }
   ensureSolaceEditorTargets();
@@ -3222,11 +3323,24 @@ body.ez-edit-on .ez-add-btn{display:flex;}
   }, true);
 
   var cpBody = $("#cpBody");
+  var cpShow = $("#cpShow");
+
+  function setCustomizePanelCollapsed(collapsed){
+    customizePanel.classList.toggle("cp-collapsed", !!collapsed);
+    if(cpBody) cpBody.style.display = "block";
+    cpToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  }
+
   cpToggle.addEventListener("click", function(){
-    var hidden = cpBody.style.display === "none";
-    cpBody.style.display = hidden ? "block" : "none";
-    cpToggle.textContent = hidden ? "Hide" : "Show";
+    setCustomizePanelCollapsed(!customizePanel.classList.contains("cp-collapsed"));
   });
+
+  if(cpShow){
+    cpShow.addEventListener("click", function(){
+      if(customizePanel.classList.contains("cp-collapsed")) setCustomizePanelCollapsed(false);
+      if(cpBody) cpBody.style.display = "block";
+    });
+  }
 
   function hideAllFloating(){
     frameToolbar.style.display = "none";
@@ -3278,11 +3392,23 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     if(e.target.closest(".ez-add-btn")) return;
     if(e.target.closest(".item-actions")) return;
     if(!editOn) return;
+    var managedProductCard = e.target.closest("#product-grid .ez-product-managed-card");
+    var managedCategoryTab = e.target.closest("#container0035 .ez-product-managed-category-tab");
+    var managedGuideTab = e.target.closest("#container0038 .ez-product-managed-guide-tab");
+    var managedReadOnlyTarget = managedProductCard || managedCategoryTab || managedGuideTab;
+
     var iconEl = e.target.closest("svg[id], i[data-lucide][id]");
     var textEl = e.target.closest(".editable-text");
     var frameEl = e.target.closest(".ez-frame");
     var idEl = e.target.closest("[id]");
     var insidePanelUi = e.target.closest("#customizePanel,#ezStylePanel,#ezFrameToolbar,#ezAttrInspector,#ezLinkPopup,#ezIdListPanel,#ezCustomCodeModal,#ezUnsavedPill");
+
+    if(managedReadOnlyTarget){
+      e.preventDefault();
+      e.stopPropagation();
+      selectFrame(managedReadOnlyTarget);
+      return;
+    }
     if(insidePanelUi) return;
     if(e.target.closest("a")){ e.preventDefault(); }
     if(e.target.closest("#legal-back-button") && !editOn){
@@ -6084,9 +6210,27 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     });
   }
 
+  // Save Settings must never serialize a live custom-effect mutation as page markup.
+  // Temporarily restore the clean pre-effect state, collect the settings, then
+  // re-inject the active effects so the user sees no visual interruption.
+  function collectSettingsForPersistence(){
+    var hasActiveEffects = customEffectsCode(customEffects).trim().length > 0;
+    if(!hasActiveEffects || !ezPreEffectState) return collectSettings();
+
+    var settings = null;
+    resetElementsToDefault();
+    try{
+      settings = collectSettings();
+    } finally {
+      injectCustomEffects(customEffects);
+      updateLastAppliedCustomCode();
+    }
+    return settings;
+  }
+
   $("#cpSave").addEventListener("click", function(){
     try{
-      localStorage.setItem(LS_SETTINGS, JSON.stringify(collectSettings()));
+      localStorage.setItem(LS_SETTINGS, JSON.stringify(collectSettingsForPersistence()));
       localStorage.removeItem(LS_DRAFT);
       unsaved = false;
       unsavedPill.style.display = "none";
@@ -6268,6 +6412,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     viewOnly = urlFlags.get("live") === "1" || queryFlags.get("live") === "1";
     if(viewOnly) body.classList.add("ez-view-only");
     setEditMode(false);
+    setCustomizePanelCollapsed(false);
     applySiteName($("#cpSiteName") ? $("#cpSiteName").value : "SOLACE", $("#cpSiteDescriptor") ? $("#cpSiteDescriptor").value : "Digital Products & E-books");
     ensurePageElementIds();
     ensureSolaceEditorTargets();
