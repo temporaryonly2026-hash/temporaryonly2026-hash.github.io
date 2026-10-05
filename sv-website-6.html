@@ -1178,10 +1178,10 @@ body.ez-edit-on .ez-add-btn{display:flex;}
 </div>
 <!-- Category Tabs -->
 <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 md:pb-0" id="container0035">
-<button class="filter-btn active px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all bg-copper text-espresso-950" data-filter="all" id="button0001">All Products</button>
-<button class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all glass-card hover:text-copper text-cream-300" data-filter="ebooks" id="button0002">E-books</button>
-<button class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all glass-card hover:text-copper text-cream-300" data-filter="guides" id="button0003">Guides</button>
-<button class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all glass-card hover:text-copper text-cream-300" data-filter="templates" id="button0004">Templates</button>
+<button type="button" class="filter-btn active px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all bg-copper text-espresso-950" data-filter="all" id="button0001">All Products</button>
+<button type="button" class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all glass-card hover:text-copper text-cream-300" data-filter="ebooks" id="button0002">E-books</button>
+<button type="button" class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all glass-card hover:text-copper text-cream-300" data-filter="guides" id="button0003">Guides</button>
+<button type="button" class="filter-btn px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all glass-card hover:text-copper text-cream-300" data-filter="templates" id="button0004">Templates</button>
 </div>
 </div>
 <!-- Product Grid -->
@@ -2053,6 +2053,24 @@ body.ez-edit-on .ez-add-btn{display:flex;}
             if (window.__assignRuntimeIds) window.__assignRuntimeIds(wrap);
         }
 
+        // Bind the Featured Digital Products category filter independently of the
+        // initial render sequence. This keeps the tabs clickable even when a
+        // restored/saved page causes an earlier renderer to short-circuit or fail.
+        if(!document.documentElement.getAttribute('data-ez-product-filter-bound')){
+            document.documentElement.setAttribute('data-ez-product-filter-bound','true');
+            document.addEventListener('click', function(e){
+                var btn = e.target && e.target.closest ? e.target.closest('#container0035 .filter-btn') : null;
+                if(!btn) return;
+                if(typeof editOn !== 'undefined' && editOn) return;
+                e.preventDefault();
+                e.stopPropagation();
+                var filter = btn.getAttribute('data-filter') || btn.getAttribute('data-product-category-id') || 'all';
+                if(typeof renderProducts === 'function'){
+                    renderProducts(filter);
+                }
+            }, true);
+        }
+
         function clampProductGuidePercent(value){
             var n=parseInt(String(value==null?'':value).replace('%',''),10);
             if(!Number.isFinite(n)) n=0;
@@ -2697,22 +2715,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
             requestAnimationFrame(updateReviewCarousel);
 
             // Category Filter Buttons
-            // Use document-level delegation so tabs remain functional even when
-            // #main is restored from saved settings and its DOM is replaced.
-            if (!document.documentElement.getAttribute('data-ez-product-filter-bound')) {
-                document.documentElement.setAttribute('data-ez-product-filter-bound', 'true');
-                document.addEventListener('click', (e) => {
-                    const btn = e.target.closest && e.target.closest('#container0035 .filter-btn');
-                    if (!btn) return;
-                    // In Edit Page mode these tabs are read-only managed controls:
-                    // let the Attribute Inspector select them instead of changing the filter.
-                    if(editOn) return;
-                    e.preventDefault();
-                    const __filter = btn.dataset.filter || 'all';
-                    renderProducts(__filter);
-                    e.stopPropagation();
-                }, true);
-            }
+            // The delegated handler is bound above, before the initial render sequence.
             syncProductCategoryTabs(state.activeProductCategory || 'all');
 
             // Product Format Buttons
