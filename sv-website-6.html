@@ -123,8 +123,9 @@
 /* Solace compatibility layer for the copied editor panel. */
 body.ez-edit-on [id].editable-text{cursor:text;}
 body.ez-edit-on img.ez-solace-logo{cursor:pointer;}
-body.ez-edit-on .ez-solace-editable:hover{outline:1.5px dashed rgba(201,161,90,.45);outline-offset:2px;cursor:pointer;}
-body.ez-edit-on .ez-solace-editable.ez-selected{outline:2px solid #C9A15A;outline-offset:2px;}
+body.ez-edit-on .ez-solace-editable:hover{cursor:pointer;}
+body.ez-edit-on .ez-solace-editable.ez-selected{outline:none;}
+/* Non-button section/frame/div outlines are defined in ez-panel-styles below. */
 #ezStylePanel .ez-solace-logo-note{font-size:10px;color:#8B8B87;line-height:1.45;margin-top:6px;}
 </style>
 
@@ -140,9 +141,12 @@ body.ez-edit-on .editable-text{cursor:text;}
 body.ez-edit-on .editable-text:hover{outline-color:rgba(43,63,221,0.35);}
 body.ez-edit-on .editable-text:focus{outline:2px solid #2b3fdd;outline-offset:1px;}
 body.ez-edit-on .ez-frame{position:relative;}
-body.ez-edit-on .ez-frame:hover{outline:1.5px dashed rgba(43,63,221,0.45);outline-offset:2px;cursor:pointer;}
-body.ez-edit-on .ez-frame.ez-selected{outline:2px solid #2b3fdd;outline-offset:2px;}
-body.ez-edit-on [id].ez-selected{outline:2px solid #2b3fdd;outline-offset:2px;}
+body.ez-edit-on .ez-frame:not(button):hover{outline:1px dashed rgba(43,63,221,0.20);outline-offset:2px;cursor:pointer;}
+body.ez-edit-on .ez-frame:not(button).ez-selected{outline:1.5px solid rgba(43,63,221,0.55);outline-offset:2px;}
+body.ez-edit-on [id].ez-selected:not(button){outline:1.5px solid rgba(43,63,221,0.55);outline-offset:2px;}
+/* Keep button outlines unchanged. Only section/frame/div editor outlines are softened. */
+body.ez-edit-on .ez-solace-editable:not(button):hover{outline:1px dashed rgba(201,161,90,.20);outline-offset:2px;}
+body.ez-edit-on .ez-solace-editable.ez-selected:not(button){outline:1.5px solid rgba(201,161,90,.48);outline-offset:2px;}
 .ez-hidden-section{display:none !important;}
 .ez-page-isolated-hidden{display:none !important;}
 
@@ -404,7 +408,7 @@ body:not(.ez-edit-on) .item-actions{display:none !important;}
 #customizePanel{
   box-sizing:border-box;
   width:290px;
-  padding:10px 11px 11px;
+  padding:18px 20px 20px 20px;
   border-radius:14px;
 }
 #customizePanel .cp-head{
@@ -551,7 +555,7 @@ body:not(.ez-edit-on) .item-actions{display:none !important;}
     right:16px;
     bottom:16px;
     width:260px;
-    padding:10px 11px 11px;
+    padding:18px 20px 20px 20px;
   }
   #customizePanel .cp-history-btn,
   #customizePanel .cp-toggle,
@@ -909,7 +913,14 @@ body.ez-view-only #ezProductManagerModal{display:none !important;}
   scrollbar-width:thin;scrollbar-color:#3D2619 transparent;
   scrollbar-gutter:stable;padding-bottom:8px;
 }
-#container0035 .filter-btn{flex:0 0 auto;white-space:nowrap;}
+#container0035 .filter-btn{
+  flex:0 0 auto;
+  white-space:nowrap;
+  pointer-events:auto !important;
+  cursor:pointer;
+  position:relative;
+  z-index:2;
+}
 #container0035::-webkit-scrollbar{display:block;height:8px;}
 #container0035::-webkit-scrollbar-track{background:rgba(61,38,25,.25);border-radius:999px;}
 #container0035::-webkit-scrollbar-thumb{background:#3D2619;border-radius:999px;}
@@ -2699,6 +2710,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
                     e.preventDefault();
                     const __filter = btn.dataset.filter || 'all';
                     renderProducts(__filter);
+                    e.stopPropagation();
                 }, true);
             }
             syncProductCategoryTabs(state.activeProductCategory || 'all');
