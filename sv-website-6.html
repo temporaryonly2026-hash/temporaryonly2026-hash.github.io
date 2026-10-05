@@ -2478,6 +2478,9 @@ body.ez-edit-on .ez-add-btn{display:flex;}
                 document.addEventListener('click', (e) => {
                     const btn = e.target.closest && e.target.closest('#container0035 .filter-btn');
                     if (!btn) return;
+                    // In Edit Page mode these tabs are read-only managed controls:
+                    // let the Attribute Inspector select them instead of changing the filter.
+                    if(editOn) return;
                     e.preventDefault();
                     const __filter = btn.dataset.filter || 'all';
                     renderProducts(__filter);
@@ -2491,6 +2494,9 @@ body.ez-edit-on .ez-add-btn{display:flex;}
                 document.addEventListener('click',function(e){
                     var target=e.target&&e.target.closest?e.target.closest('#container0038 .roast-tab'):null;
                     if(!target)return;
+                    // Product Guide tabs are managed by "Edit Product Guide".
+                    // In Edit Page mode they remain clickable for inspection only.
+                    if(editOn) return;
                     e.preventDefault();
                     state.activeProductGuide=target.dataset.roast||Object.keys(state.roastProfiles)[0];
                     renderRoastProfile(state.activeProductGuide);
