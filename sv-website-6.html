@@ -342,26 +342,26 @@ body:not(.ez-edit-on) .item-actions{display:none !important;}
 
 /* ---------- Compact Customize Panel redesign ---------- */
 #customizePanel{
-  width:408px;
-  padding:15px 16px 16px;
-  border-radius:18px;
+  width:290px;
+  padding:10px 11px 11px;
+  border-radius:14px;
   background:#141414;
 }
 #customizePanel .cp-head{display:block;margin-bottom:0;}
 #customizePanel .cp-head strong{
-  display:block;font-size:12px;line-height:1;letter-spacing:.08em;
-  text-transform:uppercase;color:#f2f2f0;margin:1px 0 12px;
+  display:block;font-size:11px;line-height:1;letter-spacing:.08em;
+  text-transform:uppercase;color:#f2f2f0;margin:1px 0 8px;
 }
 #customizePanel .cp-head-btns{
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;width:100%;margin-bottom:8px;
 }
 #customizePanel .cp-history-btn,
 #customizePanel .cp-toggle,
 #customizePanel .cp-show{
-  min-width:0;width:100%;height:74px;padding:7px 5px;border-radius:999px;
+  min-width:0;width:100%;height:38px;padding:3px 2px;border-radius:999px;
   border:1px solid rgba(255,255,255,.18);background:transparent;color:#f2f2f0;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  font-size:11px;line-height:1.05;font-weight:600;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  font-size:8.5px;line-height:1;font-weight:600;
   transition:background .18s ease,border-color .18s ease,color .18s ease,opacity .18s ease;
 }
 #customizePanel .cp-history-btn:hover,
@@ -372,11 +372,11 @@ body:not(.ez-edit-on) .item-actions{display:none !important;}
 #customizePanel .cp-history-btn:disabled{opacity:.35;cursor:not-allowed;}
 #customizePanel .cp-history-btn .cp-control-icon,
 #customizePanel .cp-toggle .cp-control-icon,
-#customizePanel .cp-show .cp-control-icon{font-size:18px;line-height:1;}
+#customizePanel .cp-show .cp-control-icon{font-size:11px;line-height:1;}
 #customizePanel .cp-show{color:#C9A15A;border-color:rgba(201,161,90,.45);}
 #customizePanel .cp-show:hover{background:rgba(201,161,90,.08);border-color:#C9A15A;}
 #customizePanel.cp-collapsed{
-  width:64px;min-width:64px;height:64px;padding:0;border-radius:16px;overflow:hidden;
+  width:56px;min-width:56px;height:56px;padding:0;border-radius:14px;overflow:hidden;
 }
 #customizePanel.cp-collapsed .cp-head{width:100%;height:100%;}
 #customizePanel.cp-collapsed .cp-head strong,
@@ -384,17 +384,17 @@ body:not(.ez-edit-on) .item-actions{display:none !important;}
 #customizePanel.cp-collapsed #cpBody{display:none!important;}
 #customizePanel.cp-collapsed .cp-head-btns{display:flex;width:100%;height:100%;}
 #customizePanel.cp-collapsed #cpToggle{
-  width:64px;height:64px;border:0;border-radius:16px;padding:0;color:#fff;background:transparent;
+  width:56px;height:56px;border:0;border-radius:14px;padding:0;color:#fff;background:transparent;
 }
-#customizePanel.cp-collapsed #cpToggle .cp-control-label{display:none;}
-#customizePanel.cp-collapsed #cpToggle .cp-control-icon{font-size:19px;}
+
+#customizePanel.cp-collapsed #cpToggle .cp-control-icon{font-size:11px;}
+#customizePanel.cp-collapsed #cpToggle .cp-control-label{display:block;font-size:8px;}
 @media (max-width:720px){
-  #customizePanel{left:16px;right:16px;bottom:16px;width:auto;}
-  #customizePanel .cp-head-btns{grid-template-columns:repeat(4,minmax(0,1fr));}
-  #customizePanel .cp-history-btn,
+  #customizePanel{left:auto;right:16px;bottom:16px;width:260px;padding:10px 11px 11px;}
+    #customizePanel .cp-history-btn,
   #customizePanel .cp-toggle,
-  #customizePanel .cp-show{height:68px;font-size:10px;}
-  #customizePanel.cp-collapsed{left:auto;right:16px;width:64px;min-width:64px;}
+  #customizePanel .cp-show{height:38px;font-size:8.5px;}
+  #customizePanel.cp-collapsed{left:auto;right:16px;width:56px;min-width:56px;}
 }
 
 /* ---------- FINAL Customize Panel sizing / typography override ---------- */
