@@ -275,6 +275,16 @@ body:not(.ez-edit-on) .item-actions{display:none !important;}
 #customizePanel .cp-show .cp-control-icon{font-size:14px;line-height:1;}
 #customizePanel .cp-show{color:#C9A15A;border-color:rgba(201,161,90,.45);}
 #customizePanel .cp-show:hover{background:rgba(201,161,90,.08);border-color:#C9A15A;}
+
+/* Restore the original Customize Panel body typography/control styling. */
+#customizePanel .cp-group{margin-bottom:14px;}
+#customizePanel .cp-group label{
+  display:block;font-size:10px;line-height:1.25;color:#9A9A96;margin-bottom:5px;
+}
+#customizePanel select{
+  width:100%;padding:8px 9px;background:#0A0A0A;color:#f2f2f0;
+  border:1px solid rgba(255,255,255,0.16);border-radius:7px;font-size:12px;
+}
 #customizePanel.cp-collapsed{
   width:56px;min-width:56px;height:56px;padding:0;border-radius:14px;overflow:hidden;
 }
@@ -289,7 +299,7 @@ body:not(.ez-edit-on) .item-actions{display:none !important;}
 #customizePanel.cp-collapsed #cpToggle .cp-control-icon{font-size:16px;}
 #customizePanel.cp-collapsed #cpToggle .cp-control-label{display:block;font-size:8.5px;}
 @media (max-width:720px){
-  #customizePanel{left:auto;right:16px;bottom:16px;width:260px;padding:10px 11px 11px;}
+  #customizePanel{left:auto;right:16px;bottom:16px;width:240px;padding:10px 11px 11px;}
   #customizePanel .cp-history-btn,
   #customizePanel .cp-toggle,
   #customizePanel .cp-show{height:42px;}
