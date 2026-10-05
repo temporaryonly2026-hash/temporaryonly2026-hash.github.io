@@ -3009,9 +3009,9 @@ body.ez-edit-on .ez-add-btn{display:flex;}
         <span class="cp-control-icon" aria-hidden="true">↷</span>
         <span class="cp-control-label">Redo</span>
       </button>
-      <button class="cp-show" id="cpShow" type="button" title="Show Customize Controls">
-        <span class="cp-control-icon" aria-hidden="true">•</span>
-        <span class="cp-control-label">Show</span>
+      <button class="cp-show" id="cpShow" type="button" title="Hide Customize Controls">
+        <span class="cp-control-icon" aria-hidden="true">−</span>
+        <span class="cp-control-label">Hide</span>
       </button>
     </div>
   </div>
@@ -3334,7 +3334,9 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     if(cpBody) cpBody.style.display = visible ? "block" : "none";
     if(cpShow){
       var label = cpShow.querySelector(".cp-control-label");
+      var icon = cpShow.querySelector(".cp-control-icon");
       if(label) label.textContent = visible ? "Hide" : "Show";
+      if(icon) icon.textContent = visible ? "−" : "+";
       cpShow.title = visible ? "Hide Customize Controls" : "Show Customize Controls";
     }
   }
