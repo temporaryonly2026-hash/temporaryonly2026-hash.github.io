@@ -296,26 +296,26 @@ body:not(.ez-edit-on) .item-actions{display:none !important;}
 
 /* ---------- Compact Customize Panel redesign ---------- */
 #customizePanel{
-  width:408px;
-  padding:15px 16px 16px;
-  border-radius:18px;
+  width:260px;
+  padding:10px 11px 11px;
+  border-radius:14px;
   background:#141414;
 }
 #customizePanel .cp-head{display:block;margin-bottom:0;}
 #customizePanel .cp-head strong{
-  display:block;font-size:12px;line-height:1;letter-spacing:.08em;
-  text-transform:uppercase;color:#f2f2f0;margin:1px 0 12px;
+  display:block;font-size:11px;line-height:1;letter-spacing:.08em;
+  text-transform:uppercase;color:#f2f2f0;margin:1px 0 9px;
 }
 #customizePanel .cp-head-btns{
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;width:100%;
 }
 #customizePanel .cp-history-btn,
 #customizePanel .cp-toggle,
 #customizePanel .cp-show{
-  min-width:0;width:100%;height:74px;padding:7px 5px;border-radius:999px;
+  min-width:0;width:100%;height:44px;padding:4px 2px;border-radius:999px;
   border:1px solid rgba(255,255,255,.18);background:transparent;color:#f2f2f0;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  font-size:11px;line-height:1.05;font-weight:600;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-size:8.5px;line-height:1;font-weight:600;
   transition:background .18s ease,border-color .18s ease,color .18s ease,opacity .18s ease;
 }
 #customizePanel .cp-history-btn:hover,
@@ -326,11 +326,11 @@ body:not(.ez-edit-on) .item-actions{display:none !important;}
 #customizePanel .cp-history-btn:disabled{opacity:.35;cursor:not-allowed;}
 #customizePanel .cp-history-btn .cp-control-icon,
 #customizePanel .cp-toggle .cp-control-icon,
-#customizePanel .cp-show .cp-control-icon{font-size:18px;line-height:1;}
+#customizePanel .cp-show .cp-control-icon{font-size:14px;line-height:1;}
 #customizePanel .cp-show{color:#C9A15A;border-color:rgba(201,161,90,.45);}
 #customizePanel .cp-show:hover{background:rgba(201,161,90,.08);border-color:#C9A15A;}
 #customizePanel.cp-collapsed{
-  width:64px;min-width:64px;height:64px;padding:0;border-radius:16px;overflow:hidden;
+  width:56px;min-width:56px;height:56px;padding:0;border-radius:14px;overflow:hidden;
 }
 #customizePanel.cp-collapsed .cp-head{width:100%;height:100%;}
 #customizePanel.cp-collapsed .cp-head strong,
@@ -338,17 +338,16 @@ body:not(.ez-edit-on) .item-actions{display:none !important;}
 #customizePanel.cp-collapsed #cpBody{display:none!important;}
 #customizePanel.cp-collapsed .cp-head-btns{display:flex;width:100%;height:100%;}
 #customizePanel.cp-collapsed #cpToggle{
-  width:64px;height:64px;border:0;border-radius:16px;padding:0;color:#fff;background:transparent;
+  width:56px;height:56px;border:0;border-radius:14px;padding:0;color:#fff;background:transparent;
 }
-#customizePanel.cp-collapsed #cpToggle .cp-control-label{display:none;}
-#customizePanel.cp-collapsed #cpToggle .cp-control-icon{font-size:19px;}
+#customizePanel.cp-collapsed #cpToggle .cp-control-icon{font-size:16px;}
+#customizePanel.cp-collapsed #cpToggle .cp-control-label{display:block;font-size:8.5px;}
 @media (max-width:720px){
-  #customizePanel{left:16px;right:16px;bottom:16px;width:auto;}
-  #customizePanel .cp-head-btns{grid-template-columns:repeat(4,minmax(0,1fr));}
+  #customizePanel{left:auto;right:16px;bottom:16px;width:260px;}
   #customizePanel .cp-history-btn,
   #customizePanel .cp-toggle,
-  #customizePanel .cp-show{height:68px;font-size:10px;}
-  #customizePanel.cp-collapsed{left:auto;right:16px;width:64px;min-width:64px;}
+  #customizePanel .cp-show{height:42px;}
+  #customizePanel.cp-collapsed{left:auto;right:16px;width:56px;min-width:56px;}
 }
 
 #ezAttrInspector{
@@ -3331,9 +3330,21 @@ body.ez-edit-on .ez-add-btn{display:flex;}
   var cpBody = $("#cpBody");
   var cpShow = $("#cpShow");
 
+  function setCustomizeBodyVisible(visible){
+    if(cpBody) cpBody.style.display = visible ? "block" : "none";
+    if(cpShow){
+      var label = cpShow.querySelector(".cp-control-label");
+      if(label) label.textContent = visible ? "Hide" : "Show";
+      cpShow.title = visible ? "Hide Customize Controls" : "Show Customize Controls";
+    }
+  }
+
   function setCustomizePanelCollapsed(collapsed){
     customizePanel.classList.toggle("cp-collapsed", !!collapsed);
-    if(cpBody) cpBody.style.display = "block";
+    setCustomizeBodyVisible(true);
+    var toggleLabel = cpToggle && cpToggle.querySelector(".cp-control-label");
+    if(toggleLabel) toggleLabel.textContent = collapsed ? "Show" : "Collapsed";
+    cpToggle.title = collapsed ? "Show Customize Panel" : "Collapse Customize Panel";
     cpToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
   }
 
@@ -3343,8 +3354,11 @@ body.ez-edit-on .ez-add-btn{display:flex;}
 
   if(cpShow){
     cpShow.addEventListener("click", function(){
-      if(customizePanel.classList.contains("cp-collapsed")) setCustomizePanelCollapsed(false);
-      if(cpBody) cpBody.style.display = "block";
+      if(customizePanel.classList.contains("cp-collapsed")){
+        setCustomizePanelCollapsed(false);
+      } else {
+        setCustomizeBodyVisible(cpBody.style.display === "none");
+      }
     });
   }
 
@@ -5445,18 +5459,29 @@ body.ez-edit-on .ez-add-btn{display:flex;}
   // so it must never be written into the saved snapshot / embed payload.
   function stripEffectResidue(root){
     if(!root) return;
-    $all("script,style,link[rel='stylesheet'],[data-ez-effect],[data-ez-runtime],.ez-effect,.typewriter-cursor,.ez-cursor", root)
+
+    // Remove known effect-only nodes outright.
+    $all("script,style,link[rel='stylesheet'],[data-ez-effect],[data-ez-runtime],.ez-effect,.typewriter-cursor,.ez-cursor")
       .forEach(function(node){ if(node.parentNode) node.parentNode.removeChild(node); });
-    // Anything inside #main that was not part of the authored page (or added
-    // deliberately through the editor) is effect residue: overlays, glow
-    // wrappers, canvases, borders. Remove it regardless of what it looks like.
-    if(ezPreEffectState){
-      $all("*", root).forEach(function(node){
-        if(node.hasAttribute && node.hasAttribute("data-ez-authored")) return;
-        if(node.closest && node.closest(".item-actions")) return;
-        if(node.parentNode) node.parentNode.removeChild(node);
-      });
-    }
+
+    if(!ezPreEffectState) return;
+
+    // Preserve authored descendants inside effect-created wrappers. Remove pure
+    // effect subtrees, but unwrap non-authored wrappers instead of deleting the
+    // authored navbar/page nodes they contain.
+    Array.prototype.slice.call($all("*", root)).reverse().forEach(function(node){
+      if(node.hasAttribute && node.hasAttribute("data-ez-authored")) return;
+      if(node.closest && node.closest(".item-actions")) return;
+      if(!node.parentNode) return;
+
+      var hasAuthoredDescendant = !!(node.querySelector && node.querySelector("[data-ez-authored]"));
+      if(hasAuthoredDescendant){
+        while(node.firstChild) node.parentNode.insertBefore(node.firstChild, node);
+        node.parentNode.removeChild(node);
+      } else {
+        node.parentNode.removeChild(node);
+      }
+    });
   }
 
   // ---- Generalized "default state" baselines -------------------------------
@@ -6216,22 +6241,12 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     });
   }
 
-  // Save Settings must never serialize a live custom-effect mutation as page markup.
-  // Temporarily restore the clean pre-effect state, collect the settings, then
-  // re-inject the active effects so the user sees no visual interruption.
+  // Save Settings serializes the effect-free authored snapshot without touching
+  // the live DOM. snapshotNode() already strips effect-only wrappers/nodes and
+  // restores baseline attributes on the cloned region, so active effects can
+  // keep running while settings are persisted.
   function collectSettingsForPersistence(){
-    var hasActiveEffects = customEffectsCode(customEffects).trim().length > 0;
-    if(!hasActiveEffects || !ezPreEffectState) return collectSettings();
-
-    var settings = null;
-    resetElementsToDefault();
-    try{
-      settings = collectSettings();
-    } finally {
-      injectCustomEffects(customEffects);
-      updateLastAppliedCustomCode();
-    }
-    return settings;
+    return collectSettings();
   }
 
   $("#cpSave").addEventListener("click", function(){
@@ -6419,6 +6434,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     if(viewOnly) body.classList.add("ez-view-only");
     setEditMode(false);
     setCustomizePanelCollapsed(false);
+    setCustomizeBodyVisible(true);
     applySiteName($("#cpSiteName") ? $("#cpSiteName").value : "SOLACE", $("#cpSiteDescriptor") ? $("#cpSiteDescriptor").value : "Digital Products & E-books");
     ensurePageElementIds();
     ensureSolaceEditorTargets();
