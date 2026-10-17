@@ -3508,6 +3508,14 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     var firstCallPending = true;
     window[fnName] = function(){
       var skip = firstCallPending && window.__ezSettingsRestored;
+      // Product cards are data-driven: if a restored snapshot left #product-grid
+      // empty, never skip the first render. A populated grid remains untouched.
+      if(skip && fnName === "renderProducts"){
+        var productGrid = document.getElementById("product-grid");
+        if(productGrid && !productGrid.querySelector(".ez-product-managed-card")){
+          skip = false;
+        }
+      }
       firstCallPending = false;
       var result = skip ? undefined : orig.apply(this, arguments);
       refreshDynamicEditorTargets();
@@ -6234,6 +6242,21 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     // Apply canonical product data after the DOM regions are restored so any
     // data-driven category tabs are synchronized with the restored page.
     if(snap.productData) restoreProductData(snap.productData);
+
+    // Runtime-rendered product cards may be absent from a clean HTML snapshot.
+    // Rebuild only an empty grid from canonical productData so All Products is
+    // populated immediately after Save Settings / refresh, without overwriting
+    // an already-restored grid or intentionally preserved card markup.
+    var restoredProductGrid = document.getElementById("product-grid");
+    var restoredProducts = snap.productData && snap.productData.products;
+    if(restoredProductGrid &&
+       !restoredProductGrid.querySelector(".ez-product-managed-card") &&
+       Array.isArray(restoredProducts) &&
+       restoredProducts.length &&
+       typeof window.renderProducts === "function"){
+      window.renderProducts((snap.productData.activeCategory || "all"));
+    }
+
     if(snap.productGuideData) restoreProductGuideData(snap.productGuideData);
     applySiteName(snap.siteName || "SOLACE", snap.siteDescriptor || "Digital Products & E-books");
     if($("#cpSiteName")) $("#cpSiteName").value = normalizeSiteName(snap.siteName || "SOLACE");
