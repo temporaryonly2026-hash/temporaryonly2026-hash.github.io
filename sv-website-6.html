@@ -2070,6 +2070,21 @@ body.ez-edit-on .ez-add-btn{display:flex;}
             }, true);
         }
 
+        // Bind Product Format Guide tabs independently of DOMContentLoaded setup.
+        // This keeps format switching and its active state available even if an
+        // unrelated initializer fails before the later page setup runs.
+        if(!document.documentElement.getAttribute('data-ez-guide-delegated')){
+            document.documentElement.setAttribute('data-ez-guide-delegated','true');
+            document.addEventListener('click',function(e){
+                var target=e.target&&e.target.closest?e.target.closest('#container0038 .roast-tab'):null;
+                if(!target)return;
+                if(typeof editOn!=='undefined'&&editOn)return;
+                e.preventDefault();
+                state.activeProductGuide=target.dataset.roast||Object.keys(state.roastProfiles)[0];
+                renderRoastProfile(state.activeProductGuide);
+            },true);
+        }
+
         function clampProductGuidePercent(value){
             var n=parseInt(String(value==null?'':value).replace('%',''),10);
             if(!Number.isFinite(n)) n=0;
