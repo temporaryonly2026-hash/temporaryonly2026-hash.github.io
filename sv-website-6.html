@@ -5705,17 +5705,53 @@ body.ez-edit-on .ez-add-btn{display:flex;}
   // so it must never be written into the saved snapshot / embed payload.
   function stripEffectResidue(root){
     if(!root) return;
-    $all("script,style,link[rel='stylesheet'],[data-ez-effect],[data-ez-runtime],.ez-effect,.typewriter-cursor,.ez-cursor", root)
+
+    // Effect wrappers must never take authored page content down with them.
+    // Some effects wrap existing sections/icons/media in a temporary DIV; when
+    // removing such a wrapper, lift its children back into the original parent.
+    function removeEffectNodeSafely(node){
+      if(!node || !node.parentNode) return;
+      var parent = node.parentNode;
+      var hasAuthoredDescendant = !!(node.querySelector && node.querySelector("[data-ez-authored]"));
+      if(hasAuthoredDescendant){
+        while(node.firstChild) parent.insertBefore(node.firstChild, node);
+      }
+      if(node.parentNode) node.parentNode.removeChild(node);
+    }
+
+    // Script/style resources are never page content. Other effect markers are
+    // removed only when the element itself is not an authored page element.
+    $all("script,style,link[rel='stylesheet']", root)
       .forEach(function(node){ if(node.parentNode) node.parentNode.removeChild(node); });
-    // Anything inside #main that was not part of the authored page (or added
-    // deliberately through the editor) is effect residue: overlays, glow
-    // wrappers, canvases, borders. Remove it regardless of what it looks like.
-    if(ezPreEffectState){
-      $all("*", root).forEach(function(node){
+    $all("[data-ez-effect],[data-ez-runtime],.ez-effect,.typewriter-cursor,.ez-cursor", root)
+      .forEach(function(node){
         if(node.hasAttribute && node.hasAttribute("data-ez-authored")) return;
-        if(node.closest && node.closest(".item-actions")) return;
-        if(node.parentNode) node.parentNode.removeChild(node);
+        removeEffectNodeSafely(node);
       });
+
+    // With an active effect, unmarked nodes can be temporary wrappers/overlays.
+    // Prune these recursively, but unwrap any node that contains authored
+    // descendants instead of deleting its complete subtree.
+    if(ezPreEffectState){
+      function pruneUnAuthoredNodes(parent){
+        Array.prototype.slice.call(parent.children || []).forEach(function(node){
+          if(node.closest && node.closest(".item-actions")) return;
+          pruneUnAuthoredNodes(node);
+          if(node.hasAttribute && node.hasAttribute("data-ez-authored")) return;
+
+          var containsAuthored = !!(node.querySelector && node.querySelector("[data-ez-authored]"));
+          if(containsAuthored){
+            var parentNode = node.parentNode;
+            if(parentNode){
+              while(node.firstChild) parentNode.insertBefore(node.firstChild, node);
+              parentNode.removeChild(node);
+            }
+          } else if(node.parentNode){
+            node.parentNode.removeChild(node);
+          }
+        });
+      }
+      pruneUnAuthoredNodes(root);
     }
   }
 
