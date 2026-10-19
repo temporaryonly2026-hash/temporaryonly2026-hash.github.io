@@ -5601,33 +5601,25 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     var hasActiveCode = customEffectsCode(nextEffects).trim().length > 0;
 
     customEffects = nextEffects;
-    // Roll the page back to its clean pre-effect state BEFORE re-injecting the
-    // remaining effects. This is effect-agnostic: whatever classes, inline
-    // styles, attributes or nodes any effect left behind are undone.
+    // Always return the live page to its clean pre-effect state before saving.
+    // Running the newly edited third-party script against the editor's current
+    // DOM can leave transient wrappers, styles, or stale element references.
     resetElementsToDefault();
-    injectCustomEffects(customEffects);
     updateLastAppliedCustomCode();
     persistCustomEffectsState();
 
-
     customCodeModal.style.display = "none";
 
-    // Removing an installed effect can leave timers/listeners from its script
-    // alive in the current document. Persist first, then reload so the page
-    // starts cleanly with only the remaining effects.
-    if(customEffectsRemoved){
-      customEffectsRemoved = false;
-      location.reload();
-      return;
-    }
-
-    // Preserve the previous empty/non-empty transition behavior.
-    if(hadActiveCode && !hasActiveCode){
-      location.reload();
-      return;
-    }
-
+    // Start every added/edited effect in a fresh document so it attaches to the
+    // restored page elements. Also reload after removals to stop old timers and
+    // listeners. persistCustomEffectsState() runs first, so the latest code is
+    // already stored before navigation.
+    var shouldReload = customEffectsRemoved || hadActiveCode || hasActiveCode;
     customEffectsRemoved = false;
+    if(shouldReload){
+      location.reload();
+      return;
+    }
   }
 
   $("#cpEditCustomCode").addEventListener("click", openCustomCodeManager);
