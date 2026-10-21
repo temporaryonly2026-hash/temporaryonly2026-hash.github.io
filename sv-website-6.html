@@ -5812,7 +5812,11 @@ body.ez-edit-on .ez-add-btn{display:flex;}
       Array.prototype.forEach.call(root.attributes, function(a){ rootAttrs[a.name] = a.value; });
       if(root.id) map[root.id] = rootAttrs;
     });
-    ezPreEffectState = { attrs: map };
+    var rootHTML = {};
+    roots.forEach(function(root){
+      if(root.id) rootHTML[root.id] = root.innerHTML;
+    });
+    ezPreEffectState = { attrs: map, rootHTML: rootHTML };
     ezAuthoredHeadNodes = Array.prototype.slice.call(document.head ? document.head.childNodes : []);
   }
 
@@ -5883,6 +5887,37 @@ body.ez-edit-on .ez-add-btn{display:flex;}
       stripEffectResidue(root);
       if(root.id && ezPreEffectState.attrs[root.id]) applyBaselineAttrs(root, ezPreEffectState.attrs[root.id]);
     });
+
+    // Attribute rollback cannot recover authored nodes that an effect removed
+    // or moved outside the page. Reinsert only missing ID-bearing subtrees from
+    // the clean pre-effect markup, preserving existing live nodes and user edits.
+    if(ezPreEffectState.rootHTML){
+      roots.forEach(function(root){
+        if(!root.id || typeof ezPreEffectState.rootHTML[root.id] !== "string") return;
+        var holder = document.createElement("div");
+        holder.innerHTML = ezPreEffectState.rootHTML[root.id];
+        var baselineNodes = Array.prototype.slice.call(holder.querySelectorAll("[id]"));
+        baselineNodes.forEach(function(source){
+          if(document.getElementById(source.id)) return;
+          var sourceParent = source.parentElement;
+          var parentId = sourceParent && sourceParent !== holder ? sourceParent.id : "";
+          var liveParent = parentId ? document.getElementById(parentId) : root;
+          if(!liveParent || !root.contains(liveParent) && liveParent !== root) return;
+          var clone = source.cloneNode(true);
+          var next = source.nextElementSibling;
+          var insertBefore = null;
+          while(next){
+            if(next.id){
+              var liveNext = document.getElementById(next.id);
+              if(liveNext && liveNext.parentElement === liveParent){ insertBefore = liveNext; break; }
+            }
+            next = next.nextElementSibling;
+          }
+          liveParent.insertBefore(clone, insertBefore);
+        });
+      });
+    }
+
     Object.keys(ezPreEffectState.attrs).forEach(function(id){
       var el = document.getElementById(id);
       if(!el) return;
