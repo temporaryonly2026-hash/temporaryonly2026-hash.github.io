@@ -5743,7 +5743,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     function removeEffectNodeSafely(node){
       if(!node || !node.parentNode) return;
       var parent = node.parentNode;
-      var hasAuthoredDescendant = !!(node.querySelector && node.querySelector("[data-ez-authored]"));
+      var hasAuthoredDescendant = !!(node.querySelector && Array.prototype.slice.call(node.querySelectorAll("*")).some(isAuthoredNode));
       if(hasAuthoredDescendant){
         while(node.firstChild) parent.insertBefore(node.firstChild, node);
       }
@@ -5756,7 +5756,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
       .forEach(function(node){ if(node.parentNode) node.parentNode.removeChild(node); });
     $all("[data-ez-effect],[data-ez-runtime],.ez-effect,.typewriter-cursor,.ez-cursor", root)
       .forEach(function(node){
-        if(node.hasAttribute && node.hasAttribute("data-ez-authored")) return;
+        if(isAuthoredNode(node)) return;
         removeEffectNodeSafely(node);
       });
 
@@ -5768,9 +5768,9 @@ body.ez-edit-on .ez-add-btn{display:flex;}
         Array.prototype.slice.call(parent.children || []).forEach(function(node){
           if(node.closest && node.closest(".item-actions")) return;
           pruneUnAuthoredNodes(node);
-          if(node.hasAttribute && node.hasAttribute("data-ez-authored")) return;
+          if(isAuthoredNode(node)) return;
 
-          var containsAuthored = !!(node.querySelector && node.querySelector("[data-ez-authored]"));
+          var containsAuthored = !!(node.querySelector && Array.prototype.slice.call(node.querySelectorAll("*")).some(isAuthoredNode));
           if(containsAuthored){
             var parentNode = node.parentNode;
             if(parentNode){
@@ -5800,6 +5800,35 @@ body.ez-edit-on .ez-add-btn{display:flex;}
   // stale "svsr-reveal" class after its observer has already unobserved the node
   // can leave the element permanently transparent.
   var EZ_TRANSIENT_REVEAL_CLASSES = ["svsr-reveal", "svsr-visible"];
+  // A cloneNode(true) copies data-ez-authored attributes. Trust must therefore
+  // be tied to the original DOM object, not a marker that effects can duplicate.
+  var ezAuthoredNodeRefs = new WeakSet();
+  function isAuthoredNode(node){
+    return !!(node && node.nodeType === 1 && ezAuthoredNodeRefs.has(node));
+  }
+  function copyAuthoredIdentity(sourceRoot, cloneRoot){
+    if(!sourceRoot || !cloneRoot) return cloneRoot;
+    function walk(source, target){
+      if(source.nodeType === 1 && target.nodeType === 1){
+        if(isAuthoredNode(source)){
+          ezAuthoredNodeRefs.add(target);
+          target.setAttribute("data-ez-authored", "1");
+        } else {
+          target.removeAttribute("data-ez-authored");
+        }
+      }
+      var sourceChildren = source.childNodes || [];
+      var targetChildren = target.childNodes || [];
+      var count = Math.min(sourceChildren.length, targetChildren.length);
+      for(var i = 0; i < count; i++){
+        if(sourceChildren[i].nodeType === targetChildren[i].nodeType){
+          walk(sourceChildren[i], targetChildren[i]);
+        }
+      }
+    }
+    walk(sourceRoot, cloneRoot);
+    return cloneRoot;
+  }
   function stripTransientScrollRevealClasses(root){
     if(!root) return;
     var nodes = [];
@@ -5823,9 +5852,15 @@ body.ez-edit-on .ez-add-btn{display:flex;}
   // page content apart from anything an effect injects.
   function markAuthored(root){
     if(!root) return;
-    if(root.setAttribute) root.setAttribute("data-ez-authored", "1");
+    if(root.setAttribute){
+      ezAuthoredNodeRefs.add(root);
+      root.setAttribute("data-ez-authored", "1");
+    }
     $all("*", root).forEach(function(node){
-      if(node.setAttribute) node.setAttribute("data-ez-authored", "1");
+      if(node.setAttribute){
+        ezAuthoredNodeRefs.add(node);
+        node.setAttribute("data-ez-authored", "1");
+      }
     });
   }
 
@@ -5998,7 +6033,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
 
   function snapshotNode(root){
     if(!root) return "";
-    var clone = root.cloneNode(true);
+    var clone = copyAuthoredIdentity(root, root.cloneNode(true));
     stripEffectResidue(clone);
     if(ezPreEffectState){
       $all("[id]", clone).forEach(function(el){
@@ -6909,7 +6944,11 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     if(window.ensureInquiryPhoneField){ window.ensureInquiryPhoneField(); }
     ensurePageElementIds();
     ensureSolaceEditorTargets();
-    if(typeof markAuthored === "function"){ markAuthored(document.getElementById("main")); }
+    // Custom effects may have added wrappers/clones by this point. Never
+    // promote their mutations to authored content during initialization.
+    if(typeof markAuthored === "function" && !customCodeContainers.length){
+      markAuthored(document.getElementById("main"));
+    }
 
     pushHistory();
     updateEmbedScriptPreview();
