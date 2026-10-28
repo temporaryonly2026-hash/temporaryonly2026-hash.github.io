@@ -6451,6 +6451,79 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     if(mobileMenu&&window.innerWidth>=1100)mobileMenu.classList.add("hidden");
   }
 
+  // Rebuild static Lucide icon placeholders from the original page snapshot
+  // when an older saved/embedded payload accidentally serialized them missing.
+  function restoreMissingStaticLucideIcons(main){
+    if(!main || !Array.isArray(history) || !history.length ||
+       !history[0] || typeof history[0].mainHTML !== "string") return;
+    var holder = document.createElement("div");
+    holder.innerHTML = history[0].mainHTML;
+
+    function isLucideElement(node){
+      if(!node || node.nodeType !== 1) return false;
+      if(node.tagName.toLowerCase() === "i") return node.hasAttribute("data-lucide");
+      if(node.tagName.toLowerCase() !== "svg") return false;
+      var classes = node.classList;
+      var hasLucideClass = classes && (classes.contains("lucide") ||
+        Array.prototype.slice.call(classes).some(function(name){ return name.indexOf("lucide-") === 0; }));
+      return !!((node.hasAttribute("data-lucide") || hasLucideClass) &&
+        node.querySelector("path, circle, rect, line, polyline, polygon, ellipse"));
+    }
+
+    Array.prototype.slice.call(holder.querySelectorAll("[id][data-lucide]")).forEach(function(source){
+      var sourceParent = source.parentElement;
+      var parentId = sourceParent && sourceParent !== holder ? sourceParent.id : "";
+      var liveParent = parentId ? document.getElementById(parentId) : main;
+      if(!liveParent || (liveParent !== main && !main.contains(liveParent))) return;
+
+      var live = document.getElementById(source.id);
+      if(live && main.contains(live) && isLucideElement(live)){
+        if(live.parentElement !== liveParent){
+          var nextSource = source.nextElementSibling;
+          var beforeLive = null;
+          while(nextSource){
+            if(nextSource.id){
+              var candidate = document.getElementById(nextSource.id);
+              if(candidate && candidate.parentElement === liveParent){ beforeLive = candidate; break; }
+            }
+            nextSource = nextSource.nextElementSibling;
+          }
+          liveParent.insertBefore(live, beforeLive);
+        }
+        return;
+      }
+
+      if(live && main.contains(live) && live.parentNode) live.parentNode.removeChild(live);
+      var restored = source.cloneNode(true);
+      var next = source.nextElementSibling;
+      var insertBefore = null;
+      while(next){
+        if(next.id){
+          var liveNext = document.getElementById(next.id);
+          if(liveNext && liveNext.parentElement === liveParent){ insertBefore = liveNext; break; }
+        }
+        next = next.nextElementSibling;
+      }
+      liveParent.insertBefore(restored, insertBefore);
+    });
+  }
+
+  // Product cards are data-driven; restore only the action icon when an older
+  // embedded settings payload retained the button/text but lost its Lucide SVG.
+  function restoreMissingProductActionIcons(main){
+    if(!main) return;
+    var anchors = main.querySelectorAll("#product-grid .ez-product-managed-card a");
+    Array.prototype.forEach.call(anchors, function(anchor){
+      if(!anchor.classList.contains("group/btn")) return;
+      var icon = anchor.querySelector('i[data-lucide="external-link"], svg[data-lucide="external-link"], svg.lucide-external-link');
+      if(icon) return;
+      var fallback = document.createElement("i");
+      fallback.setAttribute("data-lucide", "external-link");
+      fallback.className = "w-4 h-4 text-copper group-hover/btn:text-espresso-950";
+      anchor.insertBefore(fallback, anchor.firstChild);
+    });
+  }
+
   function restoreSnapshot(snap){
     if(typeof snap === "string"){
       // Compatibility with any in-memory history entry created before this patch.
@@ -6463,6 +6536,9 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     if(main && typeof snap.mainHTML === "string"){
       window.__ezSettingsRestored = true;
       main.innerHTML = snap.mainHTML;
+      // Repair static hero/section icons from the original document before
+      // authoring markers and effect baselines are re-established.
+      restoreMissingStaticLucideIcons(main);
       markAuthored(main);
     }
 
@@ -6493,6 +6569,8 @@ body.ez-edit-on .ez-add-btn{display:flex;}
        typeof window.renderProducts === "function"){
       window.renderProducts((snap.productData.activeCategory || "all"));
     }
+
+    restoreMissingProductActionIcons(main);
 
     if(snap.productGuideData) restoreProductGuideData(snap.productGuideData);
 
@@ -6530,6 +6608,9 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     if(window.lucide && typeof window.lucide.createIcons === "function"){
       window.lucide.createIcons();
     }
+    // Lucide replaces <i> nodes with SVG nodes. Mark the post-replacement tree
+    // so subsequent snapshots treat these rendered icons as authored content.
+    if(main) markAuthored(main);
   }
 
   cpUndoBtn.addEventListener("click", function(){
