@@ -5948,7 +5948,6 @@ body.ez-edit-on .ez-add-btn{display:flex;}
         holder.innerHTML = ezPreEffectState.rootHTML[root.id];
         var baselineNodes = Array.prototype.slice.call(holder.querySelectorAll("[id]"));
         baselineNodes.forEach(function(source){
-          if(document.getElementById(source.id)) return;
           var sourceParent = source.parentElement;
           var parentId = sourceParent && sourceParent !== holder ? sourceParent.id : "";
           var refs = ezPreEffectState.nodes || {};
