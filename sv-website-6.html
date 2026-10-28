@@ -3555,6 +3555,16 @@ body.ez-edit-on .ez-add-btn{display:flex;}
           skip = false;
         }
       }
+      // Like the product grid above, the dynamic topic and testimonial areas
+      // must never remain blank if a legacy/corrupted saved snapshot omitted cards.
+      if(skip && fnName === "renderOrigins"){
+        var originGrid = document.getElementById("origin-grid");
+        if(originGrid && !originGrid.children.length) skip = false;
+      }
+      if(skip && fnName === "renderReviews"){
+        var reviewsTrack = document.getElementById("reviews-track");
+        if(reviewsTrack && !reviewsTrack.querySelector(".review-card")) skip = false;
+      }
       firstCallPending = false;
       var result = skip ? undefined : orig.apply(this, arguments);
       refreshDynamicEditorTargets();
@@ -6444,6 +6454,26 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     }
 
     if(snap.productGuideData) restoreProductGuideData(snap.productGuideData);
+
+    // Older snapshots can contain empty containers for content that is normally
+    // generated at runtime. Rebuild ONLY when empty so manual edits/cards already
+    // present in a valid snapshot are preserved.
+    if(window.__ezSettingsRestored){
+      var restoredOriginGrid = document.getElementById("origin-grid");
+      if(restoredOriginGrid && !restoredOriginGrid.children.length &&
+         typeof window.renderOrigins === "function"){
+        window.renderOrigins();
+        // These are intentional page-content cards, not effect-created clones.
+        markAuthored(restoredOriginGrid);
+      }
+      var restoredReviewsTrack = document.getElementById("reviews-track");
+      if(restoredReviewsTrack && !restoredReviewsTrack.querySelector(".review-card") &&
+         typeof window.renderReviews === "function"){
+        window.renderReviews();
+        markAuthored(restoredReviewsTrack);
+      }
+    }
+
     applySiteName(snap.siteName || "SOLACE", snap.siteDescriptor || "Digital Products & E-books");
     if($("#cpSiteName")) $("#cpSiteName").value = normalizeSiteName(snap.siteName || "SOLACE");
     if($("#cpSiteDescriptor")) $("#cpSiteDescriptor").value = normalizeSiteDescriptor(snap.siteDescriptor || "Digital Products & E-books");
