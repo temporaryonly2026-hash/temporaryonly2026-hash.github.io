@@ -1035,6 +1035,24 @@ body.ez-edit-on .ez-add-btn{display:flex;}
 #navbar #mobile-menu:not(.hidden){display:block!important;}
 </style>
 
+<style id="sv-scroll-reveal-styles">
+/* Isolated Scroll Reveal: animate only while an element is entering, then release its classes. */
+@media (prefers-reduced-motion: no-preference) {
+  html.svsr-active .svsr-reveal {
+    transition-property: opacity, translate;
+    transition-duration: 680ms;
+    transition-timing-function: cubic-bezier(.22, 1, .36, 1);
+  }
+  html.svsr-active .svsr-reveal:not(.svsr-visible) {
+    opacity: 0;
+    translate: 0 18px;
+  }
+  html.svsr-active .svsr-reveal.svsr-visible {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+</style>
 </head>
 <body class="bg-espresso-900 text-cream-100 font-sans antialiased selection:bg-copper selection:text-white overflow-x-hidden">
 <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none" id="toast-container"></div>
@@ -6952,6 +6970,113 @@ body.ez-edit-on .ez-add-btn{display:flex;}
 window.addEventListener('load', function(){
   if (typeof window.__assignRuntimeIds === 'function') window.__assignRuntimeIds();
 });
+</script>
+<script id="sv-scroll-reveal-script">
+(function(){
+  'use strict';
+
+  var root = document.getElementById('main');
+  if (!root || !('IntersectionObserver' in window) ||
+      (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+    return;
+  }
+
+  // Reuse the existing observer if a page-editor action evaluates this script again.
+  if (window.__svsScrollReveal && typeof window.__svsScrollReveal.refresh === 'function') {
+    window.__svsScrollReveal.refresh();
+    return;
+  }
+
+  var selector = [
+    '#main > section',
+    '#main h2',
+    '#main img',
+    '#main #product-grid > *',
+    '#main #roast-display-panel > *',
+    '#main #reviews-track > *',
+    '#main #origin-grid > *'
+  ].join(',');
+
+  var observed = new WeakSet();
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (!entry.isIntersecting) return;
+      reveal(entry.target);
+      observer.unobserve(entry.target);
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+
+  function reveal(el){
+    el.classList.add('svsr-visible');
+    var cleaned = false;
+    var cleanupTimer = window.setTimeout(cleanup, 780);
+
+    function cleanup(){
+      if (cleaned) return;
+      cleaned = true;
+      window.clearTimeout(cleanupTimer);
+      el.removeEventListener('transitionend', onTransitionEnd);
+      // Remove every reveal-specific class after entry so later effects regain the element.
+      el.classList.remove('svsr-reveal', 'svsr-visible');
+    }
+
+    function onTransitionEnd(event){
+      if (event.target === el &&
+          (event.propertyName === 'opacity' || event.propertyName === 'translate')) {
+        cleanup();
+      }
+    }
+
+    el.addEventListener('transitionend', onTransitionEnd);
+  }
+
+  function shouldSkip(el){
+    return !el || !el.isConnected || !!el.closest('[data-svsr-ignore]');
+  }
+
+  function register(el){
+    if (shouldSkip(el) || observed.has(el)) return;
+    el.classList.add('svsr-reveal');
+    try {
+      observer.observe(el);
+      observed.add(el);
+    } catch (error) {
+      // Fail open: an unsupported/invalid target must never remain hidden.
+      el.classList.remove('svsr-reveal');
+    }
+  }
+
+  function refresh(){
+    root.querySelectorAll(selector).forEach(register);
+  }
+
+  refresh();
+  if (!root.querySelector('.svsr-reveal')) {
+    observer.disconnect();
+    return;
+  }
+
+  document.documentElement.classList.add('svsr-active');
+
+  var refreshFrame = 0;
+  var treeObserver = new MutationObserver(function(){
+    if (refreshFrame) return;
+    refreshFrame = window.requestAnimationFrame(function(){
+      refreshFrame = 0;
+      refresh();
+    });
+  });
+  treeObserver.observe(root, { childList: true, subtree: true });
+
+  window.__svsScrollReveal = {
+    refresh: refresh,
+    disconnect: function(){
+      treeObserver.disconnect();
+      observer.disconnect();
+      document.documentElement.classList.remove('svsr-active');
+    }
+  };
+})();
 </script>
 </body>
 </html>
