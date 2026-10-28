@@ -5795,6 +5795,30 @@ body.ez-edit-on .ez-add-btn{display:flex;}
   var ezPreEffectState = null;
   var ezAuthoredHeadNodes = null;
 
+  // Scroll Reveal classes are temporary presentation state, not authored page
+  // content. Never persist them in effect baselines or saved HTML: restoring a
+  // stale "svsr-reveal" class after its observer has already unobserved the node
+  // can leave the element permanently transparent.
+  var EZ_TRANSIENT_REVEAL_CLASSES = ["svsr-reveal", "svsr-visible"];
+  function stripTransientScrollRevealClasses(root){
+    if(!root) return;
+    var nodes = [];
+    if(root.nodeType === 1) nodes.push(root);
+    if(root.querySelectorAll){
+      nodes = nodes.concat(Array.prototype.slice.call(root.querySelectorAll(".svsr-reveal, .svsr-visible")));
+    }
+    nodes.forEach(function(node){
+      if(node.classList) EZ_TRANSIENT_REVEAL_CLASSES.forEach(function(name){ node.classList.remove(name); });
+    });
+  }
+  function sanitizeBaselineAttributes(attrs){
+    if(!attrs || typeof attrs.class !== "string") return attrs;
+    attrs.class = attrs.class.split(" ").filter(function(name){
+      return name && EZ_TRANSIENT_REVEAL_CLASSES.indexOf(name) === -1;
+    }).join(" ");
+    return attrs;
+  }
+
   // Tag every currently-present node as "authored" so later teardown can tell
   // page content apart from anything an effect injects.
   function markAuthored(root){
@@ -5824,15 +5848,18 @@ body.ez-edit-on .ez-add-btn{display:flex;}
       $all("[id]", root).forEach(function(el){
         var attrs = {};
         Array.prototype.forEach.call(el.attributes, function(a){ attrs[a.name] = a.value; });
-        map[el.id] = attrs;
+        map[el.id] = sanitizeBaselineAttributes(attrs);
       });
       var rootAttrs = {};
       Array.prototype.forEach.call(root.attributes, function(a){ rootAttrs[a.name] = a.value; });
-      if(root.id) map[root.id] = rootAttrs;
+      if(root.id) map[root.id] = sanitizeBaselineAttributes(rootAttrs);
     });
     var rootHTML = {};
     roots.forEach(function(root){
-      if(root.id) rootHTML[root.id] = root.innerHTML;
+      if(!root.id) return;
+      var baselineClone = root.cloneNode(true);
+      stripTransientScrollRevealClasses(baselineClone);
+      rootHTML[root.id] = baselineClone.innerHTML;
     });
     ezPreEffectState = { attrs: map, rootHTML: rootHTML };
     ezAuthoredHeadNodes = Array.prototype.slice.call(document.head ? document.head.childNodes : []);
@@ -5889,7 +5916,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
       if(!node.id) return;
       var attrs = {};
       Array.prototype.forEach.call(node.attributes, function(a){ attrs[a.name] = a.value; });
-      ezPreEffectState.attrs[node.id] = attrs;
+      ezPreEffectState.attrs[node.id] = sanitizeBaselineAttributes(attrs);
     });
   }
 
@@ -5973,6 +6000,9 @@ body.ez-edit-on .ez-add-btn{display:flex;}
       el.setAttribute("data-suffix", live.getAttribute("data-suffix") || "");
       el.setAttribute("data-decimals", live.getAttribute("data-decimals") || "0");
     });
+    // Transient Scroll Reveal classes must never leak into saved HTML /
+    // embed payloads, even when an older baseline captured them mid-animation.
+    stripTransientScrollRevealClasses(clone);
     // Internal bookkeeping attribute must not leak into saved HTML / embeds.
     $all("[data-ez-authored]", clone).forEach(function(el){ el.removeAttribute("data-ez-authored"); });
     clone.removeAttribute("data-ez-authored");
