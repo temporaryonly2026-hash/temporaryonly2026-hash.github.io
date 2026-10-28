@@ -6680,7 +6680,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
   // Save Settings must never serialize a live custom-effect mutation as page markup.
   // Temporarily restore the clean pre-effect state, collect the settings, then
   // re-inject the active effects so the user sees no visual interruption.
-  function collectSettingsForPersistence(){
+  function collectSettingsForPersistence(reinjectEffects){
     var hasActiveEffects = customEffectsCode(customEffects).trim().length > 0;
     if(!hasActiveEffects || !ezPreEffectState) return collectSettings();
 
@@ -6689,7 +6689,14 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     try{
       settings = collectSettings();
     } finally {
-      injectCustomEffects(customEffects);
+      // If saving with active effects, leave the document clean and let the
+      // Save handler reload it after persistence. Re-running third-party
+      // effects in the same mutated DOM can stack orphaned wrappers/overlays.
+      if(reinjectEffects !== false){
+        injectCustomEffects(customEffects);
+      } else {
+        clearInjectedCustomEffects();
+      }
       updateLastAppliedCustomCode();
     }
     return settings;
@@ -6697,10 +6704,22 @@ body.ez-edit-on .ez-add-btn{display:flex;}
 
   $("#cpSave").addEventListener("click", function(){
     try{
-      localStorage.setItem(LS_SETTINGS, JSON.stringify(collectSettingsForPersistence()));
+      var hasActiveEffects = customEffectsCode(customEffects).trim().length > 0;
+      var cleanEffectSave = hasActiveEffects && !!ezPreEffectState;
+      var settings = collectSettingsForPersistence(!cleanEffectSave);
+      localStorage.setItem(LS_SETTINGS, JSON.stringify(settings));
       localStorage.removeItem(LS_DRAFT);
       unsaved = false;
       unsavedPill.style.display = "none";
+
+      // Reboot the document only after the clean baseline has been persisted.
+      // This discards detached nodes/listeners that third-party effects may
+      // have left behind and lets each saved effect initialize once from clean HTML.
+      if(cleanEffectSave){
+        window.location.reload();
+        return;
+      }
+
       var btn = $("#cpSave"); var old = btn.textContent; btn.textContent = "Saved ✓";
       setTimeout(function(){ btn.textContent = old; }, 1400);
     }catch(e){ alert("Could not save settings in this browser."); }
