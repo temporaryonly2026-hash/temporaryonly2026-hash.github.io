@@ -3567,6 +3567,21 @@ body.ez-edit-on .ez-add-btn{display:flex;}
       }
       firstCallPending = false;
       var result = skip ? undefined : orig.apply(this, arguments);
+
+      // Dynamic page content is created after the editor's initial baseline.
+      // Mark renderer output (including Lucide's generated SVGs) as authored so
+      // snapshots preserve it instead of pruning its icons/cards as effect residue.
+      if(!skip && typeof markAuthored === "function"){
+        var dynamicRoots = {
+          renderProducts: "#product-grid",
+          renderOrigins: "#origin-grid",
+          renderReviews: "#reviews-track",
+          renderRoastProfile: "#roast-display-panel"
+        };
+        var dynamicRoot = dynamicRoots[fnName] ? document.querySelector(dynamicRoots[fnName]) : null;
+        if(dynamicRoot) markAuthored(dynamicRoot);
+      }
+
       refreshDynamicEditorTargets();
       return result;
     };
@@ -5814,7 +5829,26 @@ body.ez-edit-on .ez-add-btn{display:flex;}
   // be tied to the original DOM object, not a marker that effects can duplicate.
   var ezAuthoredNodeRefs = new WeakSet();
   function isAuthoredNode(node){
-    return !!(node && node.nodeType === 1 && ezAuthoredNodeRefs.has(node));
+    if(!node || node.nodeType !== 1) return false;
+    if(ezAuthoredNodeRefs.has(node)) return true;
+
+    // Lucide replaces authored <i data-lucide="..."> elements with <svg>.
+    // If that happened after the baseline was captured, the replacement SVG
+    // is a legitimate icon, not an effect-created clone. Recognize only the
+    // expected icon ID in its original parent, with the original <i> detached.
+    if(node.tagName.toLowerCase() !== "svg" || !node.id || !ezPreEffectState) return false;
+    var baselineAttrs = ezPreEffectState.attrs && ezPreEffectState.attrs[node.id];
+    var originalNode = ezPreEffectState.nodes && ezPreEffectState.nodes[node.id];
+    var expectedParent = ezPreEffectState.parents && ezPreEffectState.parents[node.id];
+    if(!baselineAttrs || !baselineAttrs["data-lucide"] || !originalNode || !expectedParent) return false;
+    if(originalNode.tagName.toLowerCase() !== "i" ||
+       originalNode.getAttribute("data-lucide") !== baselineAttrs["data-lucide"] ||
+       originalNode.isConnected) return false;
+    if(node.parentElement !== expectedParent || document.getElementById(node.id) !== node) return false;
+
+    var iconName = baselineAttrs["data-lucide"];
+    return node.getAttribute("data-lucide") === iconName ||
+      (node.classList.contains("lucide") && node.classList.contains("lucide-" + iconName));
   }
   function copyAuthoredIdentity(sourceRoot, cloneRoot){
     if(!sourceRoot || !cloneRoot) return cloneRoot;
@@ -5889,14 +5923,19 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     if(!roots.length) return;
     var map = {};
     var nodeRefs = {};
+    var parentRefs = {};
     roots.forEach(function(root){
       markAuthored(root);
-      if(root.id) nodeRefs[root.id] = root;
+      if(root.id){
+        nodeRefs[root.id] = root;
+        parentRefs[root.id] = root.parentElement;
+      }
       $all("[id]", root).forEach(function(el){
         var attrs = {};
         Array.prototype.forEach.call(el.attributes, function(a){ attrs[a.name] = a.value; });
         map[el.id] = sanitizeBaselineAttributes(attrs);
         nodeRefs[el.id] = el;
+        parentRefs[el.id] = el.parentElement;
       });
       var rootAttrs = {};
       Array.prototype.forEach.call(root.attributes, function(a){ rootAttrs[a.name] = a.value; });
@@ -5909,7 +5948,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
       stripTransientScrollRevealClasses(baselineClone);
       rootHTML[root.id] = baselineClone.innerHTML;
     });
-    ezPreEffectState = { attrs: map, rootHTML: rootHTML, nodes: nodeRefs };
+    ezPreEffectState = { attrs: map, rootHTML: rootHTML, nodes: nodeRefs, parents: parentRefs };
     ezAuthoredHeadNodes = Array.prototype.slice.call(document.head ? document.head.childNodes : []);
   }
 
@@ -5966,7 +6005,9 @@ body.ez-edit-on .ez-add-btn{display:flex;}
       Array.prototype.forEach.call(node.attributes, function(a){ attrs[a.name] = a.value; });
       ezPreEffectState.attrs[node.id] = sanitizeBaselineAttributes(attrs);
       if(!ezPreEffectState.nodes) ezPreEffectState.nodes = {};
+      if(!ezPreEffectState.parents) ezPreEffectState.parents = {};
       ezPreEffectState.nodes[node.id] = node;
+      ezPreEffectState.parents[node.id] = node.parentElement;
     });
   }
 
