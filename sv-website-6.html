@@ -5843,12 +5843,15 @@ body.ez-edit-on .ez-add-btn{display:flex;}
     var roots = ezEffectScopeRoots();
     if(!roots.length) return;
     var map = {};
+    var nodeRefs = {};
     roots.forEach(function(root){
       markAuthored(root);
+      if(root.id) nodeRefs[root.id] = root;
       $all("[id]", root).forEach(function(el){
         var attrs = {};
         Array.prototype.forEach.call(el.attributes, function(a){ attrs[a.name] = a.value; });
         map[el.id] = sanitizeBaselineAttributes(attrs);
+        nodeRefs[el.id] = el;
       });
       var rootAttrs = {};
       Array.prototype.forEach.call(root.attributes, function(a){ rootAttrs[a.name] = a.value; });
@@ -5861,7 +5864,7 @@ body.ez-edit-on .ez-add-btn{display:flex;}
       stripTransientScrollRevealClasses(baselineClone);
       rootHTML[root.id] = baselineClone.innerHTML;
     });
-    ezPreEffectState = { attrs: map, rootHTML: rootHTML };
+    ezPreEffectState = { attrs: map, rootHTML: rootHTML, nodes: nodeRefs };
     ezAuthoredHeadNodes = Array.prototype.slice.call(document.head ? document.head.childNodes : []);
   }
 
@@ -5917,6 +5920,8 @@ body.ez-edit-on .ez-add-btn{display:flex;}
       var attrs = {};
       Array.prototype.forEach.call(node.attributes, function(a){ attrs[a.name] = a.value; });
       ezPreEffectState.attrs[node.id] = sanitizeBaselineAttributes(attrs);
+      if(!ezPreEffectState.nodes) ezPreEffectState.nodes = {};
+      ezPreEffectState.nodes[node.id] = node;
     });
   }
 
@@ -5946,19 +5951,34 @@ body.ez-edit-on .ez-add-btn{display:flex;}
           if(document.getElementById(source.id)) return;
           var sourceParent = source.parentElement;
           var parentId = sourceParent && sourceParent !== holder ? sourceParent.id : "";
-          var liveParent = parentId ? document.getElementById(parentId) : root;
-          if(!liveParent || !root.contains(liveParent) && liveParent !== root) return;
-          var clone = source.cloneNode(true);
+          var refs = ezPreEffectState.nodes || {};
+          // Resolve the expected parent inside this authored root. A global ID
+          // lookup can point at a node the effect moved OUTSIDE its real section.
+          var liveParent = parentId ? (refs[parentId] || document.getElementById(parentId)) : root;
+          if(!liveParent || (liveParent !== root && !root.contains(liveParent))) return;
+
+          // Prefer the exact pre-effect DOM node reference. Effects can move an
+          // original node elsewhere and keep its ID, which fooled the old global
+          // getElementById guard into skipping recovery and leaving the section empty.
+          var liveNode = refs[source.id] || document.getElementById(source.id);
+          if(liveNode && (liveNode === root || liveNode === liveParent ||
+             (liveNode.contains && liveNode.contains(liveParent)))) return;
+          if(!liveNode) liveNode = source.cloneNode(true);
+
           var next = source.nextElementSibling;
           var insertBefore = null;
           while(next){
             if(next.id){
-              var liveNext = document.getElementById(next.id);
-              if(liveNext && liveNext.parentElement === liveParent){ insertBefore = liveNext; break; }
+              var liveNext = refs[next.id] || document.getElementById(next.id);
+              if(liveNext && liveNext !== liveNode && liveNext.parentElement === liveParent){ insertBefore = liveNext; break; }
             }
             next = next.nextElementSibling;
           }
-          liveParent.insertBefore(clone, insertBefore);
+
+          // Correct even when the node still exists but has the wrong parent.
+          if(liveNode.parentElement !== liveParent || !root.contains(liveNode)){
+            liveParent.insertBefore(liveNode, insertBefore);
+          }
         });
       });
     }
