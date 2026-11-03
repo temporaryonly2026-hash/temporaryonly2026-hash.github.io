@@ -1017,8 +1017,8 @@ body.ez-edit-on .ez-add-btn{display:flex;}
 /* ---------- Responsive layout / mobile navigation fixes ---------- */
 #navbar{position:fixed;overflow:visible;isolation:isolate;}
 #mobile-menu-btn{position:relative;z-index:60;pointer-events:auto;flex:0 0 auto;width:44px;height:44px;min-width:44px;min-height:44px;padding:0!important;display:none;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;}
-#mobile-menu-btn .hamburger-lines{display:flex;width:21px;height:16px;flex-direction:column;justify-content:space-between;pointer-events:none;}
-#mobile-menu-btn .hamburger-lines span{display:block;width:21px;height:2px;border-radius:2px;background:currentColor;transition:transform .22s ease,opacity .18s ease;transform-origin:center;}
+#navbar #mobile-menu-btn .hamburger-lines{display:flex!important;visibility:visible!important;opacity:1!important;width:21px!important;height:16px!important;flex:0 0 21px;flex-direction:column;justify-content:space-between;pointer-events:none;}
+#navbar #mobile-menu-btn .hamburger-lines > span{display:block!important;visibility:visible!important;opacity:1!important;width:21px!important;min-width:21px!important;height:2px!important;min-height:2px!important;flex:0 0 2px;background-color:#c98250!important;border:0!important;border-radius:2px!important;box-shadow:0 0 1px rgba(201,130,80,.35);transition:transform .22s ease,opacity .18s ease;transform-origin:center;}
 #mobile-menu-btn[aria-expanded="true"] .hamburger-lines span:first-child{transform:translateY(7px) rotate(45deg);}
 #mobile-menu-btn[aria-expanded="true"] .hamburger-lines span:nth-child(2){opacity:0;}
 #mobile-menu-btn[aria-expanded="true"] .hamburger-lines span:last-child{transform:translateY(-7px) rotate(-45deg);}
